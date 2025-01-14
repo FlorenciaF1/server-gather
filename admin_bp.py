@@ -2,7 +2,7 @@
 from flask import Blueprint, request, jsonify # Blueprint para modularizar y relacionar con app
 from flask_bcrypt import Bcrypt                                  # Bcrypt para encriptación
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity   # Jwt para tokens
-from models import User                                          # importar tabla "User" de models
+from models import User, ModeloVacante                                          # importar tabla "User" de models
 from database import db                                          # importa la db desde database.py
 from datetime import timedelta                                   # importa tiempo especifico para rendimiento de token válido
 
@@ -106,3 +106,60 @@ def show_users():
         return jsonify(user_list), 200
     else:
         return {"Error": "Token inválido o no proporcionado"}, 401
+
+@admin_bp.route('/crear_modelo_vacante', methods=['POST'])
+def crear_modelo_vacante():
+    try:
+        # Obtener los datos del JSON enviado
+        data = request.get_json()
+
+        # Extraer campos necesarios
+        titulo = data.get('titulo')
+        descripcion = data.get('descripcion', None)
+        campos = data.get('campos', [])
+
+        # Validar datos obligatorios
+        if not titulo:
+            return jsonify({"error": "El campo 'titulo' es obligatorio."}), 400
+        if not isinstance(campos, list):
+            return jsonify({"error": "El campo 'campos' debe ser una lista."}), 400
+
+        # Crear el nuevo modelo de vacante
+        nuevo_modelo = ModeloVacante(
+            titulo=titulo,
+            descripcion=descripcion,
+            campos=campos
+        )
+
+        # Guardar en la base de datos
+        db.session.add(nuevo_modelo)
+        db.session.commit()
+
+        return jsonify({"message": "Modelo de vacante creado exitosamente.", "id": nuevo_modelo.id}), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@admin_bp.route('/listar_modelos_vacantes', methods=['GET'])
+def listar_modelos_vacantes():
+    try:
+        # Obtener todas las vacantes de la tabla
+        vacantes = ModeloVacante.query.all()
+
+        # Serializar las vacantes en una lista de diccionarios
+        resultado = [
+            {
+                "id": vacante.id,
+                "titulo": vacante.titulo,
+                "descripcion": vacante.descripcion,
+                "campos": vacante.campos
+            }
+            for vacante in vacantes
+        ]
+
+        return jsonify({"vacantes": resultado}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

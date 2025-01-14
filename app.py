@@ -28,7 +28,6 @@ app.register_blueprint(admin_bp, url_prefix='/admin')  # poder registrarlo como 
 app.register_blueprint(public_bp, url_prefix='/public')  # blueprint public_bp
 
 
-
 # DATABASE---------------
 db_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance', 'mydatabase.db')
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
@@ -48,4 +47,3 @@ with app.app_context():
 # AL FINAL ( detecta que encendimos el servidor desde terminal y nos da detalles de los errores )
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
-
